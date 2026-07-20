@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",                          // Modern JavaScript features
+    "module": "NodeNext",                        // Modern Node.js module resolution
+    "moduleResolution": "NodeNext",
+    "rootDir": "./src",                          // Source file location
+    "outDir": "./dist",                          // Compiled production output location
+    "strict": true,                              // Enforces strong type checking
+    "esModuleInterop": true,                     // Clean imports for CommonJS modules
+    "skipLibCheck": true  
+                           // Faster compilation
+  },
+  "include": ["src/**/*", "drizzle.config.ts"] ,
+  "exclude": ["node_modules", "**/*.spec.ts"]                      // Tells compiler to look only inside src
+}
