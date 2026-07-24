@@ -5,8 +5,29 @@ import cors from 'cors';
 const app = express();
 const PORT = process.env.PORT || 3000;
 import { clerkWebhookHandler } from "./webhooks/clerk";
-app.use(express.json());
+import path from 'path';
+import fs from 'fs';
 
+dotenv.config();
+app.use(express.json());
+const publicDir = path.join(process.cwd(), "public");
+
+if (fs.existsSync(publicDir)) {
+  app.use(express.static(publicDir));
+
+  app.get("/{*any}", (req, res, next) => {
+    // Skip API and Webhook endpoints
+    if (req.path.startsWith("/api") || req.path.startsWith("/webhooks")) {
+      return next();
+    }
+
+    // Serve index.html for all React Router routes
+    res.sendFile(path.join(publicDir, "index.html"), (err) => {
+      if (err) next(err);
+    });
+  });
+}
+  
 app.use(clerkMiddleware());
 app.use(cors());
 app.get('/', (req: Request, res: Response) => {
