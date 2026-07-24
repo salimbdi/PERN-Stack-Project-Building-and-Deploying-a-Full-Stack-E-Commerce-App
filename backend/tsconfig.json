@@ -10,6 +10,6 @@
     "skipLibCheck": true  
                            // Faster compilation
   },
-  "include": ["src/**/*", "drizzle.config.ts"] ,
-  "exclude": ["node_modules", "**/*.spec.ts"]                      // Tells compiler to look only inside src
+  "include": ["src/**/*"] ,
+  "exclude": ["node_modules", "**/*.spec.ts", "drizzle.config.ts"]                      // Tells compiler to look only inside src
 }
