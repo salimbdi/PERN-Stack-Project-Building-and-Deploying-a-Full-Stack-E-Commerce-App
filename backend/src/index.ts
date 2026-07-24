@@ -12,9 +12,6 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // 1. Middlewares الأساسية
-app.use(cors());
-app.use(express.json());
-
 // 2. تعريف rawJson لـ Webhooks قبل استخدامها
 const rawJson = express.raw({ type: "application/json", limit: "1mb" });
 
@@ -22,6 +19,9 @@ const rawJson = express.raw({ type: "application/json", limit: "1mb" });
 app.post("/webhooks/clerk", rawJson, (req, res) => {
   void clerkWebhookHandler(req, res);
 });
+
+app.use(cors());
+app.use(express.json());
 
 // 4. Clerk Middleware لباقي الـ Routes
 app.use(clerkMiddleware());
@@ -50,9 +50,6 @@ app.get('/api/health', (req: Request, res: Response) => {
 });
 
 // 6. تشغيل السيرفر
-app.listen(PORT, () => {
-  console.log(`Server is running at http://localhost:${PORT}`);
-});
 // ✅ إضافة "0.0.0.0" لضمان استقبال الاتصالات من خارج الحاوية
 app.listen(Number(PORT), "0.0.0.0", () => {
   console.log(`Server is running at http://0.0.0.0:${PORT}`);

@@ -1,5 +1,4 @@
 import type { Request, Response } from "express";
-import { getEnv } from "../lib/env";
 import { verifyWebhook } from "@clerk/backend/webhooks";
 import { parseRole } from "../lib/roles";
 import { db } from "../db";
@@ -7,12 +6,15 @@ import { users } from "../db/schema";
 import { eq } from "drizzle-orm";
 
 export async function clerkWebhookHandler(req: Request, res: Response) {
-  const env = getEnv();
+  // Read ONLY what this handler needs directly from process.env.
+  // Do NOT call getEnv() here — that validates the full schema and would crash
+  // if any unrelated optional var (Stream, ImageKit, Polar, etc.) is missing/blank.
+  const webhookSecret = process.env.CLERK_WEBHOOK_SECRET;
 
   try {
-    // webhook verification needs a shared secret; without it we cannot trust incoming POSTs.
-    if (!env.CLERK_WEBHOOK_SECRET) {
-      res.status(503).send("Webhooks secret is not provided");
+    if (!webhookSecret) {
+      console.error("CLERK_WEBHOOK_SECRET is not set");
+      res.status(503).send("Webhook secret is not configured");
       return;
     }
 
@@ -26,7 +28,9 @@ export async function clerkWebhookHandler(req: Request, res: Response) {
     });
 
     // throws if signature is wrong or body was tampered with; only then we trust evt.
-    const evt = await verifyWebhook(request, { signingSecret: env.CLERK_WEBHOOK_SECRET });
+    const evt = await verifyWebhook(request, { signingSecret: webhookSecret });
+
+    console.log("Clerk webhook received:", evt.type);
 
     if (evt.type === "user.created" || evt.type === "user.updated") {
       const u = evt.data;
@@ -40,6 +44,8 @@ export async function clerkWebhookHandler(req: Request, res: Response) {
 
       const role = parseRole(u.public_metadata?.role);
 
+      console.log(`Upserting user: clerkId=${u.id} email=${email}`);
+
       await db
         .insert(users)
         .values({
@@ -52,19 +58,23 @@ export async function clerkWebhookHandler(req: Request, res: Response) {
           target: users.clerkUserId,
           set: { email, displayName, role, updatedAt: new Date() },
         });
+
+      console.log(`User upserted successfully: clerkId=${u.id}`);
     }
 
     if (evt.type === "user.deleted") {
       const id = evt.data.id;
       if (id) {
+        console.log(`Deleting user: clerkId=${id}`);
         await db.delete(users).where(eq(users.clerkUserId, id));
+        console.log(`User deleted: clerkId=${id}`);
       }
     }
 
     res.json({ ok: true });
   } catch (err) {
     // Bad signature, malformed payload, or DB error — do not leak details to the client.
-    console.error("Clerk webhook error", err);
+    console.error("Clerk webhook error:", err);
     res.status(400).json({ error: "Invalid webhook" });
   }
 }
