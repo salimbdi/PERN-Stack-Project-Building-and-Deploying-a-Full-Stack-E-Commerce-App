@@ -6,6 +6,7 @@ import path from 'path';
 import fs from 'fs';
 import { clerkWebhookHandler } from "./webhooks/clerk";
 
+import keepAliveCron from "./lib/cron";
 dotenv.config();
 
 const app = express();
@@ -26,15 +27,25 @@ app.use(express.json());
 // 4. Clerk Middleware لباقي الـ Routes
 app.use(clerkMiddleware());
 
+app.get("/health", (_req, res) => {
+  res.json({ ok: true });
+});
+
+app.get('/api/health', (req: Request, res: Response) => {
+  res.send('Hello from Express with TypeScript!');
+});
+
 // 5. تقديم ملفات الـ Static المبنيه من Frontend (Vite)
 const publicDir = path.join(process.cwd(), "public");
 
 if (fs.existsSync(publicDir)) {
   app.use(express.static(publicDir));
 
-  app.get("/{*any}", (req, res, next) => {
+  // Catch-all route should be /*, not /{*any} which is specific to some routers,
+  // but let's keep /* to make sure it handles all front-end routing
+  app.get("/*", (req, res, next) => {
     // Skip API and Webhook endpoints
-    if (req.path.startsWith("/api") || req.path.startsWith("/webhooks")) {
+    if (req.path.startsWith("/api") || req.path.startsWith("/webhooks") || req.path.startsWith("/health")) {
       return next();
     }
 
@@ -45,12 +56,11 @@ if (fs.existsSync(publicDir)) {
   });
 }
 
-app.get('/api/health', (req: Request, res: Response) => {
-  res.send('Hello from Express with TypeScript!');
-});
-
 // 6. تشغيل السيرفر
 // ✅ إضافة "0.0.0.0" لضمان استقبال الاتصالات من خارج الحاوية
 app.listen(Number(PORT), "0.0.0.0", () => {
   console.log(`Server is running at http://0.0.0.0:${PORT}`);
-});
+  if (process.env.NODE_ENV === "production") {
+    keepAliveCron.start();
+  }
+});
