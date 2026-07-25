@@ -1,4 +1,4 @@
-import express, { Request, Response } from 'express';
+import express, { Request, Response , NextFunction} from 'express';
 import { clerkMiddleware } from '@clerk/express';
 import dotenv from 'dotenv';
 import cors from 'cors';
@@ -8,15 +8,16 @@ import { clerkWebhookHandler } from "./webhooks/clerk";
 
 import keepAliveCron from "./lib/cron";
 dotenv.config();
-
+import meRouter from './routes/meRouter';
+import productRouter from './routes/productRouter';
+import streamRouter from './routes/streamRouter';
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// 1. Middlewares الأساسية
-// 2. تعريف rawJson لـ Webhooks قبل استخدامها
+
 const rawJson = express.raw({ type: "application/json", limit: "1mb" });
 
-// 3. Webhook الخاص بـ Clerk
+// 3. Webhook
 app.post("/webhooks/clerk", rawJson, (req, res) => {
   void clerkWebhookHandler(req, res);
 });
@@ -34,7 +35,9 @@ app.get("/health", (_req, res) => {
 app.get('/api/health', (req: Request, res: Response) => {
   res.send('Hello from Express with TypeScript!');
 });
-
+app.use('/api/me', meRouter);
+app.use('/api/products', productRouter);
+app.use('/api/streram', streamRouter);
 // 5. تقديم ملفات الـ Static المبنيه من Frontend (Vite)
 const publicDir = path.join(process.cwd(), "public");
 
@@ -56,6 +59,13 @@ if (fs.existsSync(publicDir)) {
   });
 }
 
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+  console.error("Unhandled Error:", err);
+  res.status(err.status || 500).json({
+    error: err.message || "Internal Server Error",
+  });
+});
+
 // 6. تشغيل السيرفر
 // ✅ إضافة "0.0.0.0" لضمان استقبال الاتصالات من خارج الحاوية
 app.listen(Number(PORT), "0.0.0.0", () => {
@@ -63,4 +73,4 @@ app.listen(Number(PORT), "0.0.0.0", () => {
   if (process.env.NODE_ENV === "production") {
     keepAliveCron.start();
   }
-});
+});
