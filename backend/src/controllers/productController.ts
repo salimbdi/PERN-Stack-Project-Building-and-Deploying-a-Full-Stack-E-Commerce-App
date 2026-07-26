@@ -51,7 +51,7 @@ export const getProductBySlug = async (req: Request, res: Response, next: NextFu
     const [product] = await db
       .select()
       .from(products)
-      .where(eq(products.slug, slug));
+      .where(eq(products.slug, slug as string));
 
     if (!product) {
       res.status(404).json({ error: "Product not found" });

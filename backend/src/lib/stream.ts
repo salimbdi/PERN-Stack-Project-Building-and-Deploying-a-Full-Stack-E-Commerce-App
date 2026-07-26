@@ -16,7 +16,7 @@ export function streamChatDisplayName(
 
 // 2. دالة لإنشاء كائن اتصال بسيرفر Stream Chat باستخدام الـ API Key و Secret
 export function getStreamChatServer(env: Env) {
-  return StreamChat.getInstance(env.STREAM_API_KEY, env.STREAM_API_SECRET);
+  return StreamChat.getInstance(env.STREAM_API_KEY as string, env.STREAM_API_SECRET);
 }
 
 // 3. دالة لتوليد ID فريد لمستخدم Stream مسبوقاً بـ clerk_ لتميزه
