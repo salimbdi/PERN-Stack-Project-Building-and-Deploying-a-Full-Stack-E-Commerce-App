@@ -7,7 +7,7 @@ export const getLocalUser = async (clerkId: string) => {
   const [user] = await db
     .select()
     .from(users)
-    .where(eq(users.clerkId, clerkId));
+    .where(eq(users.clerkUserId, clerkId));
 
   return user || null;
 };
