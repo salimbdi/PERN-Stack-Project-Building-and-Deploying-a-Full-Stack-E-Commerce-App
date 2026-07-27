@@ -5,6 +5,7 @@ import cors from 'cors';
 import path from 'path';
 import fs from 'fs';
 import { clerkWebhookHandler } from "./webhooks/clerk";
+import { polarWebhookHandler } from "./webhooks/polar";
 
 import keepAliveCron from "./lib/cron";
 dotenv.config();
@@ -20,6 +21,10 @@ const PORT = process.env.PORT || 3000;
 const rawJson = express.raw({ type: "application/json", limit: "1mb" });
 app.post("/webhooks/clerk", rawJson, (req, res) => {
   void clerkWebhookHandler(req, res);
+});
+
+app.post("/webhooks/polar", rawJson, (req, res) => {
+  void polarWebhookHandler(req, res);
 });
 
 // 2. Global Middlewares

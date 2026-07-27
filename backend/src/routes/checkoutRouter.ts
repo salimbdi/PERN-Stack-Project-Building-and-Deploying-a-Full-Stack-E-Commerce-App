@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { handleStripeCheckoutSession } from "../controllers/checkoutController.js";
+import { createCheckout } from "../controllers/checkoutController.js";
 
 const checkoutRouter = Router();
 
-checkoutRouter.post("/createcheckout", handleStripeCheckoutSession);
+checkoutRouter.post("/createcheckout", createCheckout);
 export default checkoutRouter;
