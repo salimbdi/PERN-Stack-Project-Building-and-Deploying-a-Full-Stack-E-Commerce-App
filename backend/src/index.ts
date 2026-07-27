@@ -12,7 +12,7 @@ dotenv.config();
 import meRouter from './routes/meRouter';
 import productRouter from './routes/productRouter';
 import streamRouter from './routes/streamRouter';
-
+import checkoutRouter from './routes/checkoutRouter';
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -41,7 +41,7 @@ app.get('/api/health', (_req: Request, res: Response) => {
 app.use('/api/me', meRouter);
 app.use('/api/products', productRouter);
 app.use('/api/stream', streamRouter); // Fixed typo: 'streram' -> 'stream'
-
+app.use('/api/checkout', checkoutRouter);
 // 5. Serve Frontend Static Build (Vite/React SPA)
 const publicDir = path.join(process.cwd(), "public");
 
