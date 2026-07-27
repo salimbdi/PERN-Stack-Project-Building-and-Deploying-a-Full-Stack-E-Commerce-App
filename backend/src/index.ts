@@ -14,6 +14,9 @@ import meRouter from './routes/meRouter';
 import productRouter from './routes/productRouter';
 import streamRouter from './routes/streamRouter';
 import checkoutRouter from './routes/checkoutRouter';
+import * as Sentry from "@sentry/node";
+import { sentryClerkUserMiddleware } from './middleware/sentryClerkUser';
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -33,6 +36,7 @@ app.use(express.json());
 
 // 3. Clerk Middleware
 app.use(clerkMiddleware());
+app.use(sentryClerkUserMiddleware);
 
 // 4. API Routes & Health Checks
 app.get("/health", (_req, res) => {
@@ -78,7 +82,19 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     error: err.message || "Internal Server Error",
   });
 });
+// sentry will be attached to the response object
+Sentry.setupExpressErrorHandler(app);
 
+app.use(
+  (_err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    const sentryId = (res as express.Response & { sentry?: string }).sentry;
+
+    res.status(500).json({
+      error: "Internal server error",
+      ...(sentryId !== undefined && { sentryId }),
+    });
+  },
+);
 // 7. Start Server
 app.listen(Number(PORT), "0.0.0.0", () => {
   console.log(`Server is running at http://0.0.0.0:${PORT}`);
