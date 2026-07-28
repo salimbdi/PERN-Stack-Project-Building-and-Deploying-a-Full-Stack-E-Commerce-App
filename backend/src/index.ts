@@ -6,7 +6,7 @@ import path from 'path';
 import fs from 'fs';
 import { clerkWebhookHandler } from "./webhooks/clerk";
 import { polarWebhookHandler } from "./webhooks/polar";
-
+import adminRouter from './routes/adminRouter';
 import keepAliveCron from "./lib/cron";
 dotenv.config();
 
@@ -51,6 +51,8 @@ app.use('/api/me', meRouter);
 app.use('/api/products', productRouter);
 app.use('/api/stream', streamRouter); // Fixed typo: 'streram' -> 'stream'
 app.use('/api/checkout', checkoutRouter);
+// Mount Admin sub-routes beneath the shared dashboard path prefix
+app.use("/api/admin", adminRouter);
 // 5. Serve Frontend Static Build (Vite/React SPA)
 const publicDir = path.join(process.cwd(), "public");
 
